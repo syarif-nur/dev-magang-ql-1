@@ -19,7 +19,7 @@ use App\Http\Controllers\TransaksiController;
 //Master Barang
 Route::get('/master-barang', [MasterBarangController::class, 'index'])->name('master_barang');
 Route::get('/master-barang/{id}', [MasterBarangController::class, 'show']);
-Route::post('/master-barang/store', [MasterBarangController::class, 'store']);
+Route::post('/master-barang', [MasterBarangController::class, 'store']);
 Route::put('/master-barang/{id}', [MasterBarangController::class, 'update']);
 Route::delete('/master-barang/{id}', [MasterBarangController::class, 'destroy']);
 

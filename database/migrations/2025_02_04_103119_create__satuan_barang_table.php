@@ -9,9 +9,9 @@ return new class extends Migration {
     {
         Schema::create('satuan_barang', function (Blueprint $table) {
             $table->id();
+            $table->integer('id_barang');
             $table->string('nama_satuan', 255);
-            $table->foreignId('id_barang')->constrained('master_barang')->onDelete('cascade');
-            $table->decimal('harga', 10, 2);
+            $table->float('harga', 10, 2);
             $table->smallInteger('status')->default(1);
             $table->timestamps();
         });
