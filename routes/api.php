@@ -21,10 +21,15 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // master_barang - satuan
 Route::prefix('barang_satuan')->group(function () {
+
+    // get barang dengan dengan nama satuan "Pack" 
+    Route::get('/pack', [MasterBarangController::class, 'getBarangBySatuanPack']);
+    
     Route::get('/', [MasterBarangController::class, 'index']);
     Route::post('/', [MasterBarangController::class, 'store']);
     Route::get('/{id}', [MasterBarangController::class, 'show']);
     Route::put('/{id}', [MasterBarangController::class, 'update']);
     Route::delete('/{id}', [MasterBarangController::class, 'destroy']);
+
+    
 });
-// Route::apiResource('/barang_satuan', App\HttpControllers\Api\MasterBarangController::class);

@@ -52,8 +52,6 @@ class MasterBarangController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        DB::beginTransaction();
-
         try {
             $barangList = [];
 
@@ -74,11 +72,11 @@ class MasterBarangController extends Controller
                     ]);
                 }
     
-                // Load data satuan untuk response
-                $barangList[] = $barang->load('master_satuan');
+                // Menyimpan data master_barang dan satuan
+                $barangWithSatuan = $barang->load('master_satuan');
+                $barangList[] = $barangWithSatuan;
             }
     
-            DB::commit();
             return response()->json([
                 'message' => 'Data master barang dan satuan berhasil disimpan',
                 'data' => $barangList
@@ -121,34 +119,28 @@ class MasterBarangController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nama_barang' => 'required|string|max:255',
-            'img_url' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'img_url' => 'required|url',
             'qty' => 'required|integer',
             'status' => 'required|integer',
             'satuan' => 'required|array',
-            'master_satuan.nama_satuan' => 'required|string|max:255',
-            'master_satuan.harga' => 'required|numeric',
-            'master_satuan.status' => 'required|integer',
+            'satuan.*.nama_satuan' => 'required|string|max:255',
+            'satuan.*.harga' => 'required|numeric',
+            'satuan.*.status' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        DB:: beginTransaction();
         try {
             $barang = MasterBarang::find($id);
             if (!$barang) {
                 return response()->json(['message' => 'Barang tidak ditemukan'], 404);
             } 
 
-            $imgUrl = $barang->img_url;
-            if ($request->hasFile('img_url')) {
-                $imgUrl = $request->file('img_url')->store('barang', 'public');
-            }
-
             $barang->update([
                 'nama_barang' => $request->nama_barang,
-                'img_url' => $imgUrl,
+                'img_url' => $request->img_url,
                 'qty' => $request->qty,
                 'status' => $request->status,
             ]); 
@@ -164,10 +156,11 @@ class MasterBarangController extends Controller
                 ]);
             }
     
-            DB::commit();
+            $barangWithSatuan = $barang->load('master_satuan');
+
             return response()->json([
-                'message' => 'Data berhasil diperbarui',
-                'data' => $barang->load('satuan')
+                'message' => 'Data master barang dan satuan berhasil diperbarui',
+                'data' => $barangWithSatuan,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -183,16 +176,36 @@ class MasterBarangController extends Controller
         $barang = MasterBarang::find($id);
         if (!$barang) {
         return response()->json(['message' => 'Barang tidak ditemukan'], 404);
-    }
+        }
 
-    DB::beginTransaction();
-    try {
-        $barang->delete();
-        DB::commit();
-        return response()->json(['message' => 'Data berhasil dihapus'], 200);
+        try {
+            $barang->delete();
+            
+            MasterSatuan::where('id_barang', $id)->delete();
+
+            return response()->json(['message' => 'Data berhasil dihapus'], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    // mencari barang berdasarkan satuan "Pack"
+    public function getBarangBySatuanPack()
+    {
+        $barang = MasterBarang::with('master_satuan')
+            ->whereHas('master_satuan', function ($query) {
+                $query->where('nama_satuan', 'like', '%Pack%');
+        })
+        ->get();
+
+        if ($barang->isEmpty()) {
+            return response()->json(['message' => 'Barang yang memiliki nama satuan "Pack" tidak ditemukan'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Barang yang memiliki nama satuan "Pack"',
+            'data' => $barang
+        ], 200);
     }
 }

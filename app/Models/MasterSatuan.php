@@ -19,7 +19,7 @@ class MasterSatuan extends Model
 
     public function master_barang()
     {
-        return $this->belongsTo(MasterBarang::class);
+        return $this->belongsTo(MasterBarang::class, 'id_barang', 'id');
     }
 
     public function transaksi()
