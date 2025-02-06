@@ -11,7 +11,7 @@ class master_barang extends Model
     protected $table = 'master_barang';
     protected $fillable = ['id barang', 'nama_barang', 'img_url', 'qty', 'status', 'satuan'];
 
-    public function satuanBarang()
+    public function satuan_Barang()
     {
         return $this->hasMany(satuan_barang ::class, 'id_barang'); 
     }

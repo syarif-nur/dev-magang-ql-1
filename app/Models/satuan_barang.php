@@ -11,7 +11,7 @@ class satuan_barang extends Model
     protected $table = 'satuan_barang';
     protected $fillable = ['nama_satuan', 'id_barang', 'harga', 'status'];
 
-    public function masterBarang()
+    public function master_Barang()
     {
         return $this->belongsTo(master_barang ::class, 'id_barang');
     }

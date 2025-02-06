@@ -2,49 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\master_barang;
-
-
+use App\Models\satuan_barang;
+use Illuminate\Http\Request;
 
 class MasterBarangController extends Controller
 {
-    public function index()
-    {
-        return response()->json(master_barang::all());
-    }
-
     public function store(Request $request)
     {
+        // Validasi data yang diterima
         $validatedData = $request->validate([
-            'kode_barang' => 'required|string|max:50|unique:master_barang,kode_barang',
-            'nama_barang' => 'required|string|max:100',
-            'qty' => 'required|integer|min:0',
-            'status' => 'required|string|max:50',
-            'id_satuan' => 'required|exists:satuan_barang,id',
-            'stok' => 'required|integer|min:0',
-            'harga' => 'required|integer|min:0',
+            '*.nama_barang' => 'required|string',
+            '*.img_url' => 'required|url',
+            '*.qty' => 'required|integer',
+            '*.status' => 'required|boolean',
+            '*.satuan' => 'required|array',  // pastikan 'satuan' adalah array
+            '*.satuan.*.nama_satuan' => 'required|string',
+            '*.satuan.*.harga' => 'required|numeric',
+            '*.satuan.*.status' => 'required|boolean',
+        ]);
+          // Simpan data ke tabel MasterBarang
+        $masterBarang = master_barang::create([
+            'nama_barang' => $validatedData['nama_barang'],
+            'img_url' => $validatedData['img_url'],
+            'qty' => $validatedData['qty'],
+            'status' => $validatedData['status'],
         ]);
 
-        $barang = master_barang::create($validatedData);
-        return response()->json(['message' => 'Barang berhasil ditambahkan', 'data' => $barang], 201);
-    }
+        // Loop untuk menyimpan data satuan_barang
+        foreach ($validatedData['satuan'] as $satuanData) {
+            // Tambahkan id_barang ke satuan_barang
+            $satuanData['id_barang'] = $masterBarang->id;
+            satuan_barang::create($satuanData);
+        }
 
-    public function show($id)
-    {
-        return response()->json(master_barang::findOrFail($id));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $barang = master_barang::findOrFail($id);
-        $barang->update($request->all());
-        return response()->json(['message' => 'Barang berhasil diperbarui', 'data' => $barang]);
-    }
-
-    public function destroy($id)
-    {
-        master_barang::findOrFail($id)->delete();
-        return response()->json(['message' => 'Barang berhasil dihapus']);
+        // Kembalikan response dengan data yang telah disimpan
+        return response()->json([
+            'master_barang' => $masterBarang,
+            'satuan_barang' => $masterBarang->satuans,  // Mengambil relasi satuan_barang
+        ], 201);
     }
 }
