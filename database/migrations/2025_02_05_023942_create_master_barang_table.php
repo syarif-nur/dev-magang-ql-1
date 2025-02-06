@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('master_barang', function (Blueprint $table) {
-            $table->id(); // bigserial
-            $table->string('nama_barang', 255); // collation default
-            $table->text('img_url');   // txt, collation default
-            $table->integer('qty');    // int4
-            $table->smallInteger('status')->default(1);  // int2, default '1' smallint
+            $table->id(); 
+            $table->string('nama_barang', 255); 
+            $table->text('img_url');   
+            $table->integer('qty');    
+            $table->smallInteger('status')->default(1);  
             $table->timestamps();
         });
     }
