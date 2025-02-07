@@ -110,27 +110,55 @@ class MasterBarangController extends Controller
             'status' => $validatedData['status'],
         ]);
 
-        // Loop through the 'satuan' array and update or create each related satuan_barang record
-        foreach ($validatedData['satuan'] as $satuanData) {
-            // Check if the satuan already exists or create a new one
-            $satuan = satuan_barang::updateOrCreate(
-                ['id_barang' => $masterBarang->id, 'nama_satuan' => $satuanData['nama_satuan']], // Check by id_barang and nama_satuan
-                [
-                    'harga' => $satuanData['harga'],
-                    'status' => $satuanData['status'],
-                ]
-            );
-        }
-
-        $masterBarang = master_barang::with('satuan_Barang')->findOrFail($id);
-
+            
+        // Loop untuk menyimpan atau memperbarui data
+        DB::transaction(function () use ($validatedData, $masterBarang) {
+            $satuanIds = []; // Menyimpan ID satuan yang masih digunakan
+    
+            foreach ($validatedData['satuan'] as $index => $satuanData) {
+                // Ambil satuan lama berdasarkan index atau buat baru
+                $satuan = satuan_barang::where('id_barang', $masterBarang->id)
+                    ->orderBy('id')
+                    ->skip($index)
+                    ->first();
+    
+                if ($satuan) {
+                    // Update jika sudah ada
+                    $satuan->update([
+                        'nama_satuan' => $satuanData['nama_satuan'],
+                        'harga' => $satuanData['harga'],
+                        'status' => $satuanData['status'],
+                    ]);
+                } else {
+                    // Insert jika belum cukup data lama
+                    $satuan = satuan_barang::create([
+                        'id_barang' => $masterBarang->id,
+                        'nama_satuan' => $satuanData['nama_satuan'],
+                        'harga' => $satuanData['harga'],
+                        'status' => $satuanData['status'],
+                    ]);
+                }
+    
+                $satuanIds[] = $satuan->id;
+            }
+    
+            // Hapus satuan yang tidak ada dalam request terbaru
+            satuan_barang::where('id_barang', $masterBarang->id)
+                ->whereNotIn('id', $satuanIds)
+                ->delete();
+        });
+    
+        // Ambil data terbaru setelah update
+        $masterBarang = master_barang::with('satuan_barang')->findOrFail($masterBarang->id);
+    
         return response()->json([
             'master_barang' => $masterBarang,
-            'satuan_barang' => $masterBarang->satuan_Barang, // Correct relationship method
+            'satuan_barang' => $masterBarang->satuan_barang,
         ], 200);
-    }
+          }
+        
     public function destroy($id)
-{
+    {
     try {
         DB::beginTransaction();
 
@@ -177,4 +205,7 @@ public function getSatuanByMasterBarang(Request $request)
 
     return response()->json($barang);
     }
-}
+};
+
+//updatenya salah
+//updatenya dibikin kalau mau update data di hapus semua dulu baru di tambah yang diupdate
