@@ -156,5 +156,25 @@ class MasterBarangController extends Controller
         ], 500);
     }
 }
- }
+public function getSatuanByMasterBarang(Request $request)
+{
+    $nama_satuan = $request->input('nama_satuan'); // Ambil dari request
 
+    if (!$nama_satuan) {
+        return response()->json(['message' => 'Nama satuan harus diisi'], 400);
+    }
+
+    // Cari barang berdasarkan nama_satuan dari relasi satuan_barang
+    $barang = Master_Barang::whereHas('satuan_barang', function ($query) use ($nama_satuan) {
+        $query->where('nama_satuan', $nama_satuan);
+    })->with(['satuan_barang' => function ($query) use ($nama_satuan) {
+        $query->where('nama_satuan', $nama_satuan);
+    }])->get();
+
+    if ($barang->isEmpty()) {
+        return response()->json(['message' => 'Barang dengan satuan tersebut tidak ditemukan'], 404);
+    }
+
+    return response()->json($barang);
+    }
+}

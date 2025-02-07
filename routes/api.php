@@ -27,6 +27,8 @@ Route::delete('/master-barang/{id}', [MasterBarangController::class, 'destroy'])
 Route::get('/satuan-barang', [SatuanBarangController::class, 'index'])->name( 'satuanbarang');
 Route::get('/satuan-barang/{id}', [SatuanBarangController::class, 'show']);
 Route::post('/satuan-barang', [MasterBarangController::class, 'store']);
+Route::get('/barang-by-satuan', [MasterBarangController::class, 'getSatuanByMasterBarang']);
+
 
 //Transaksi
 Route::post('/transaksi', [TransaksiController::class, 'store']);
